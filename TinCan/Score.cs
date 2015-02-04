@@ -14,12 +14,14 @@
     limitations under the License.
 */
 using System;
+using System.Collections.Generic;
+
 using Newtonsoft.Json.Linq;
 using TinCan.Json;
 
 namespace TinCan
 {
-    public class Score : JsonModel
+    public class Score : JsonModel, IValidatable
     {
         public Nullable<Double> scaled { get; set; }
         public Nullable<Double> raw { get; set; }
@@ -76,6 +78,44 @@ namespace TinCan
         public static explicit operator Score(JObject jobj)
         {
             return new Score(jobj);
+        }
+
+        public IEnumerable<ValidationFailure> Validate(bool earlyReturnOnFailure)
+        {
+            if (this.scaled.HasValue && ((this.scaled.Value < 0.0) || (this.scaled.Value > 1.0)))
+            {
+                yield return new ValidationFailure("Scaled score must be between 0.0 and 1.0");
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
+
+            if ((this.min.HasValue && this.max.HasValue) && (this.max.Value < this.min.Value))
+            {
+                yield return new ValidationFailure("Max score cannot be lower than min score");
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
+
+            if (this.raw.HasValue)
+            {
+                if (this.max.HasValue && (this.raw.Value > this.max.Value))
+                {
+                    yield return new ValidationFailure("Raw score cannot be greater than max score");
+                    if (earlyReturnOnFailure)
+                    {
+                        yield break;
+                    }
+                }
+
+                if (this.min.HasValue && (this.raw.Value < this.min.Value))
+                {
+                    yield return new ValidationFailure("Raw score cannot be less than min score");
+                }
+            }
         }
     }
 }

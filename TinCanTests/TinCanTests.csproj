@@ -70,7 +70,13 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActivityTest.cs" />
+    <Compile Include="AgentAccountTest.cs" />
     <Compile Include="AgentTest.cs" />
+    <Compile Include="ContextActivitiesTest.cs" />
+    <Compile Include="ContextTest.cs" />
+    <Compile Include="InteractionActivityDefinitionTest.cs" />
+    <Compile Include="ScoreTest.cs" />
     <Compile Include="Support.cs" />
     <Compile Include="SubStatementTest.cs" />
     <Compile Include="StatementTest.cs" />

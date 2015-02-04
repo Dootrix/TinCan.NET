@@ -14,12 +14,15 @@
     limitations under the License.
 */
 using System;
+using System.Collections.Generic;
+using System.Linq;
+
 using Newtonsoft.Json.Linq;
 using TinCan.Json;
 
 namespace TinCan
 {
-    public abstract class StatementBase : JsonModel
+    public abstract class StatementBase : JsonModel, IValidatable
     {
         private const String ISODateTimeFormat = "o";
 
@@ -122,6 +125,46 @@ namespace TinCan
             }
 
             return result;
+        }
+
+        public virtual IEnumerable<ValidationFailure> Validate(bool earlyReturnOnFailure)
+        {
+            if (this.verb == null)
+            {
+                yield return new ValidationFailure("Statement does not have a verb");
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
+
+            if (this.actor == null)
+            {
+                yield return new ValidationFailure("Statement does not have an actor");
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
+
+            if (this.target == null)
+            {
+                yield return new ValidationFailure("Statement does not have an object");
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
+
+            var validatables = new object[] { this.actor, this.target, this.result, this.context }.OfType<IValidatable>();
+            foreach (var failure in validatables.SelectMany(x => x.Validate(earlyReturnOnFailure)))
+            {
+                yield return failure;
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
         }
     }
 }

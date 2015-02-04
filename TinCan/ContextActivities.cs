@@ -14,12 +14,14 @@
     limitations under the License.
 */
 using System.Collections.Generic;
+using System.Linq;
+
 using Newtonsoft.Json.Linq;
 using TinCan.Json;
 
 namespace TinCan
 {
-    public class ContextActivities : JsonModel
+    public class ContextActivities : JsonModel, IValidatable
     {
         public List<Activity> parent { get; set; }
         public List<Activity> grouping { get; set; }
@@ -112,6 +114,25 @@ namespace TinCan
         public static explicit operator ContextActivities(JObject jobj)
         {
             return new ContextActivities(jobj);
+        }
+
+        public IEnumerable<ValidationFailure> Validate(bool earlyReturnOnFailure)
+        {
+            var allActivities = GetListOrEmpty(this.parent).Concat(GetListOrEmpty(this.grouping)).Concat(GetListOrEmpty(this.category)).Concat(GetListOrEmpty(this.other));
+
+            foreach (var validationFailure in allActivities.SelectMany(x => x.Validate(earlyReturnOnFailure)))
+            {
+                yield return validationFailure;
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
+        }
+
+        private static IEnumerable<Activity> GetListOrEmpty(IEnumerable<Activity> activities)
+        {
+            return activities ?? Enumerable.Empty<Activity>();
         }
     }
 }
