@@ -14,12 +14,14 @@
     limitations under the License.
 */
 using System;
+using System.Collections.Generic;
+
 using Newtonsoft.Json.Linq;
 using TinCan.Json;
 
 namespace TinCan
 {
-    public class AgentAccount : JsonModel
+    public class AgentAccount : JsonModel, IValidatable
     {
         // TODO: check to make sure is absolute?
         public Uri homePage { get; set; }
@@ -65,6 +67,24 @@ namespace TinCan
         public static explicit operator AgentAccount(JObject jobj)
         {
             return new AgentAccount(jobj);
+        }
+
+        public IEnumerable<ValidationFailure> Validate(bool earlyReturnOnFailure)
+        {
+            if (this.homePage == null)
+            {
+                yield return new ValidationFailure("Homepage cannot be null");
+
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
+
+            if (string.IsNullOrEmpty(this.name))
+            {
+                 yield return new ValidationFailure("Account name cannot be null");
+            }
         }
     }
 }

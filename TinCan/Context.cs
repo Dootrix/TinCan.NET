@@ -14,12 +14,15 @@
     limitations under the License.
 */
 using System;
+using System.Collections.Generic;
+using System.Linq;
+
 using Newtonsoft.Json.Linq;
 using TinCan.Json;
 
 namespace TinCan
 {
-    public class Context : JsonModel
+    public class Context : JsonModel, IValidatable
     {
         public Nullable<Guid> registration { get; set; }
         public Agent instructor { get; set; }
@@ -123,6 +126,19 @@ namespace TinCan
         public static explicit operator Context(JObject jobj)
         {
             return new Context(jobj);
+        }
+
+        public IEnumerable<ValidationFailure> Validate(bool earlyReturnOnFailure)
+        {
+            var validatables = new object[] { this.instructor, this.team, this.contextActivities, this.statement }.OfType<IValidatable>();
+            foreach (var failure in validatables.SelectMany(x => x.Validate(earlyReturnOnFailure)))
+            {
+                yield return failure;
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
         }
     }
 }

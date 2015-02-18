@@ -14,12 +14,14 @@
     limitations under the License.
 */
 using System;
+using System.Collections.Generic;
+
 using Newtonsoft.Json.Linq;
 using TinCan.Json;
 
 namespace TinCan
 {
-    public class Agent : JsonModel, StatementTarget
+    public class Agent : JsonModel, StatementTarget, IValidatable
     {
         public static readonly String OBJECT_TYPE = "Agent";
         public virtual String ObjectType { get { return OBJECT_TYPE; } }
@@ -59,6 +61,11 @@ namespace TinCan
             }
         }
 
+        public static explicit operator Agent(JObject jobj)
+        {
+            return new Agent(jobj);
+        }
+
         public override JObject ToJObject(TCAPIVersion version)
         {
             JObject result = new JObject();
@@ -89,9 +96,52 @@ namespace TinCan
             return result;
         }
 
-        public static explicit operator Agent(JObject jobj)
+        public IEnumerable<ValidationFailure> Validate(bool earlyReturnOnFailure)
         {
-            return new Agent(jobj);
+            var num = 0;
+            if (!string.IsNullOrEmpty(this.mbox))
+            {
+                const string Mailto = "mailto:";
+                if (!this.mbox.StartsWith(Mailto, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    yield return new ValidationFailure("Mbox value " + this.mbox + " must begin with mailto: prefix");
+                    if (earlyReturnOnFailure)
+                    {
+                        yield break;
+                    }
+                }
+
+                if (!ValidationHelper.IsValidEmailAddress(this.mbox.Substring(Mailto.Length)))
+                {
+                    yield return new ValidationFailure("Mbox value " + this.mbox + " is not a valid email address.");
+                    if (earlyReturnOnFailure)
+                    {
+                        yield break;
+                    }
+                }
+
+                num++;
+            }
+
+            if (!string.IsNullOrEmpty(this.mbox_sha1sum))
+            {
+                num++;
+            }
+
+            if (!string.IsNullOrEmpty(this.openid))
+            {
+                num++;
+            }
+
+            if (this.account != null)
+            {
+                num++;
+            }
+
+            if (num != 1)
+            {
+                yield return new ValidationFailure("Exactly 1 inverse functional properties must be defined.  However, " + num + " are defined.");
+            }
         }
     }
 }

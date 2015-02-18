@@ -14,13 +14,15 @@
     limitations under the License.
 */
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Xml;
 using Newtonsoft.Json.Linq;
 using TinCan.Json;
 
 namespace TinCan
 {
-    public class Result : JsonModel
+    public class Result : JsonModel, IValidatable
     {
         public Nullable<Boolean> completion { get; set; }
         public Nullable<Boolean> success { get; set; }
@@ -95,6 +97,11 @@ namespace TinCan
         public static explicit operator Result(JObject jobj)
         {
             return new Result(jobj);
+        }
+
+        public IEnumerable<ValidationFailure> Validate(bool earlyReturnOnFailure)
+        {
+            return this.score != null ? this.score.Validate(earlyReturnOnFailure) : Enumerable.Empty<ValidationFailure>();
         }
     }
 }

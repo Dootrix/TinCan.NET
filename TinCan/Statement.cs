@@ -14,12 +14,14 @@
     limitations under the License.
 */
 using System;
+using System.Collections.Generic;
+
 using Newtonsoft.Json.Linq;
 using TinCan.Json;
 
 namespace TinCan
 {
-    public class Statement : StatementBase
+    public class Statement : StatementBase, IValidatable
     {
         // TODO: put in common location
         private const String ISODateTimeFormat = "o";
@@ -94,6 +96,30 @@ namespace TinCan
             if (timestamp == null)
             {
                 timestamp = DateTime.UtcNow;
+            }
+        }
+
+        public override IEnumerable<ValidationFailure> Validate(bool earlyReturnOnFailure)
+        {
+            foreach (var validationFailure in base.Validate(earlyReturnOnFailure))
+            {
+                yield return validationFailure;
+                if (earlyReturnOnFailure)
+                {
+                    yield break;
+                }
+            }
+            
+            if (this.authority != null)
+            {
+                foreach (var validationFailure in this.authority.Validate(earlyReturnOnFailure))
+                {
+                    yield return validationFailure;
+                    if (earlyReturnOnFailure)
+                    {
+                        yield break;
+                    }
+                }
             }
         }
     }

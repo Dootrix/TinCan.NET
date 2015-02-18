@@ -14,12 +14,14 @@
     limitations under the License.
 */
 using System;
+using System.Collections.Generic;
+
 using Newtonsoft.Json.Linq;
 using TinCan.Json;
 
 namespace TinCan
 {
-    public class Activity : JsonModel, StatementTarget
+    public class Activity : JsonModel, StatementTarget, IValidatable
     {
         public static readonly String OBJECT_TYPE = "Activity";
         public String ObjectType { get { return OBJECT_TYPE; } }
@@ -37,11 +39,16 @@ namespace TinCan
             {
                 id = new Uri(jobj.Value<String>("id"));
             }
+
             if (jobj["definition"] != null)
             {
-                definition = (ActivityDefinition)jobj.Value<JObject>("definition");
+                var definitionJobj = jobj.Value<JObject>("definition");
+                this.definition = definitionJobj["type"] != null && string.Equals(definitionJobj.Value<String>("type").Trim(), InteractionActivityDefinition.INTERACTION_DEFINITION_TYPE, StringComparison.InvariantCultureIgnoreCase)
+                        ? (InteractionActivityDefinition)definitionJobj
+                        : (ActivityDefinition)definitionJobj;
             }
         }
+
 
         public override JObject ToJObject(TCAPIVersion version)
         {
@@ -63,6 +70,14 @@ namespace TinCan
         public static explicit operator Activity(JObject jobj)
         {
             return new Activity(jobj);
+        }
+
+        public IEnumerable<ValidationFailure> Validate(bool earlyReturnOnFailure)
+        {
+            if (this.id == null)
+            {
+                yield return new ValidationFailure("Activity does not have an identifier");
+            }
         }
     }
 }
